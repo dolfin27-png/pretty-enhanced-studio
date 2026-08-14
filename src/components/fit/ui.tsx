@@ -144,77 +144,73 @@ export function Ring({
   thickness?: number;
   label?: string;
 }) {
-  const w = style === "minimal" ? Math.max(2, thickness - 3) : style === "glow" ? thickness + 3 : thickness;
+  const w =
+    style === "minimal" ? Math.max(2, thickness - 3) : style === "glow" ? thickness + 3 : thickness;
   const r = size / 2 - w / 2 - 2;
   const c = 2 * Math.PI * r;
   const pct = Math.min(100, Math.max(0, percent));
-  const stroke =
-    style === "minimal" ? "var(--violet)" : `url(#ringGrad-${style})`;
-  const dash =
-    style === "segmented"
-      ? { strokeDasharray: `${c / 24 - 3} 3` }
-      : { strokeDasharray: c, strokeDashoffset: c - (c * pct) / 100 };
+  const gradId = `ringGrad-${style}-${Math.round(size)}`;
+  const stroke = style === "minimal" ? "var(--violet)" : `url(#${gradId})`;
+  const segments = 20;
+  const segLen = c / segments - 3;
+  const filled = Math.round((pct / 100) * segments);
+
   return (
     <div className="relative grid shrink-0 place-items-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90 overflow-visible">
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          stroke="color-mix(in oklab, var(--border) 90%, transparent)"
-          strokeWidth={w}
-          fill="none"
-        />
-        {style === "segmented" ? (
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={r}
-            stroke={stroke}
-            strokeWidth={w}
-            fill="none"
-            strokeLinecap="butt"
-            pathLength={100}
-            strokeDasharray={`${Math.max(0.001, pct)} 100`}
-            className="transition-[stroke-dasharray] duration-500"
-            style={{ strokeDasharray: undefined, ...({} as object) }}
-          />
-        ) : (
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={r}
-            stroke={stroke}
-            strokeWidth={w}
-            fill="none"
-            strokeLinecap="round"
-            {...dash}
-            className="transition-[stroke-dashoffset] duration-500"
-            style={
-              style === "glow"
-                ? { filter: "drop-shadow(0 0 6px color-mix(in oklab, var(--violet) 70%, transparent))" }
-                : undefined
-            }
-          />
-        )}
-        {style === "segmented" && (
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={r}
-            stroke="var(--background)"
-            strokeWidth={w}
-            fill="none"
-            strokeDasharray={`${c / 24 - 4} 4`}
-            style={{ mixBlendMode: "destination-out" as never }}
-          />
-        )}
         <defs>
-          <linearGradient id={`ringGrad-${style}`} x1="0" y1="0" x2="1" y2="1">
+          <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="var(--violet)" />
             <stop offset="100%" stopColor="var(--cyan)" />
           </linearGradient>
         </defs>
+        {style === "segmented" ? (
+          Array.from({ length: segments }, (_, i) => (
+            <circle
+              key={i}
+              cx={size / 2}
+              cy={size / 2}
+              r={r}
+              stroke={i < filled ? stroke : "color-mix(in oklab, var(--border) 90%, transparent)"}
+              strokeWidth={w}
+              fill="none"
+              strokeDasharray={`${segLen} ${c - segLen}`}
+              strokeDashoffset={-(i * (c / segments))}
+              className="transition-all duration-300"
+            />
+          ))
+        ) : (
+          <>
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={r}
+              stroke="color-mix(in oklab, var(--border) 90%, transparent)"
+              strokeWidth={w}
+              fill="none"
+            />
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={r}
+              stroke={stroke}
+              strokeWidth={w}
+              fill="none"
+              strokeLinecap="round"
+              strokeDasharray={c}
+              strokeDashoffset={c - (c * pct) / 100}
+              className="transition-[stroke-dashoffset] duration-500"
+              style={
+                style === "glow"
+                  ? {
+                      filter:
+                        "drop-shadow(0 0 7px color-mix(in oklab, var(--violet) 75%, transparent))",
+                    }
+                  : undefined
+              }
+            />
+          </>
+        )}
       </svg>
       <div className="absolute text-center">
         <div className="font-display text-sm font-bold">{Math.round(pct)}%</div>
@@ -223,8 +219,6 @@ export function Ring({
     </div>
   );
 }
-
-export { dash as _unusedDash } from "./_noop";
 
 export function Bar({ percent, color = "var(--violet)" }: { percent: number; color?: string }) {
   return (
