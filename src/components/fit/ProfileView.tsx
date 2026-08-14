@@ -7,10 +7,12 @@ export default function ProfileView({
   state,
   update,
   derived,
+  onOpenSettings,
 }: {
   state: FitState;
   update: (fn: (s: FitState) => FitState) => void;
   derived: ReturnType<typeof useDerived>;
+  onOpenSettings: () => void;
 }) {
   const key = todayKey();
   const [m, setM] = useState({ weight: 0, chest: 0, waist: 0, arm: 0, leg: 0 });
@@ -34,6 +36,21 @@ export default function ProfileView({
     a.download = `fit-program-${key}.json`;
     a.click();
     toast.success("Veriler indirildi");
+  };
+
+  const importData = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(String(reader.result)) as Partial<FitState>;
+        if (!parsed.program || !parsed.sessions) throw new Error("bad");
+        update((s) => ({ ...s, ...parsed, settings: { ...s.settings, ...(parsed.settings ?? {}) } }));
+        toast.success("Yedek geri yüklendi");
+      } catch {
+        toast.error("Dosya okunamadı");
+      }
+    };
+    reader.readAsText(file);
   };
 
   return (
@@ -147,13 +164,36 @@ export default function ProfileView({
       </Panel>
 
       <Panel>
+        <SectionHead kicker="Görünüm" title="Kişiselleştirme" right={<Pill tone="violet">Tema</Pill>} />
+        <p className="mb-3 text-xs text-muted-foreground">
+          Renk gradyanı, yazı boyutu, progres halkası stili ve varsayılan hedefler.
+        </p>
+        <Btn variant="primary" className="w-full" onClick={onOpenSettings}>
+          🎨 Paneli aç
+        </Btn>
+      </Panel>
+
+      <Panel>
         <SectionHead kicker="Veri" title="Yedekle & sıfırla" />
         <div className="grid grid-cols-2 gap-2">
           <Btn variant="soft" onClick={exportData}>
             ⤓ Dışa aktar
           </Btn>
+          <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-cyan/25 bg-cyan/12 px-4 text-sm font-semibold text-cyan transition active:scale-[0.98]">
+            ⤒ İçe aktar
+            <input
+              type="file"
+              accept="application/json"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) importData(f);
+              }}
+            />
+          </label>
           <Btn
             variant="danger"
+            className="col-span-2"
             onClick={() => {
               if (!window.confirm("Tüm veriler silinsin mi? Bu işlem geri alınamaz.")) return;
               window.localStorage.removeItem("fit_elite_v3");

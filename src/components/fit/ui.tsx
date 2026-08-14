@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import type { RingStyle } from "@/lib/fit/theme";
 
 export function Panel({
   className,
@@ -131,35 +132,90 @@ export function Metric({
   );
 }
 
-export function Ring({ percent, size = 74 }: { percent: number; size?: number }) {
-  const r = size / 2 - 5;
+export function Ring({
+  percent,
+  size = 74,
+  style = "gradient",
+  thickness = 6,
+  label = "TAMAM",
+}: {
+  percent: number;
+  size?: number;
+  style?: RingStyle;
+  thickness?: number;
+  label?: string;
+}) {
+  const w =
+    style === "minimal" ? Math.max(2, thickness - 3) : style === "glow" ? thickness + 3 : thickness;
+  const r = size / 2 - w / 2 - 2;
   const c = 2 * Math.PI * r;
+  const pct = Math.min(100, Math.max(0, percent));
+  const gradId = `ringGrad-${style}-${Math.round(size)}`;
+  const stroke = style === "minimal" ? "var(--violet)" : `url(#${gradId})`;
+  const segments = 20;
+  const segLen = c / segments - 3;
+  const filled = Math.round((pct / 100) * segments);
+
   return (
     <div className="relative grid shrink-0 place-items-center" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} stroke="var(--border)" strokeWidth="6" fill="none" />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          stroke="url(#ringGrad)"
-          strokeWidth="6"
-          fill="none"
-          strokeLinecap="round"
-          strokeDasharray={c}
-          strokeDashoffset={c - (c * Math.min(100, percent)) / 100}
-          className="transition-[stroke-dashoffset] duration-500"
-        />
+      <svg width={size} height={size} className="-rotate-90 overflow-visible">
         <defs>
-          <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+          <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="var(--violet)" />
             <stop offset="100%" stopColor="var(--cyan)" />
           </linearGradient>
         </defs>
+        {style === "segmented" ? (
+          Array.from({ length: segments }, (_, i) => (
+            <circle
+              key={i}
+              cx={size / 2}
+              cy={size / 2}
+              r={r}
+              stroke={i < filled ? stroke : "color-mix(in oklab, var(--border) 90%, transparent)"}
+              strokeWidth={w}
+              fill="none"
+              strokeDasharray={`${segLen} ${c - segLen}`}
+              strokeDashoffset={-(i * (c / segments))}
+              className="transition-all duration-300"
+            />
+          ))
+        ) : (
+          <>
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={r}
+              stroke="color-mix(in oklab, var(--border) 90%, transparent)"
+              strokeWidth={w}
+              fill="none"
+            />
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={r}
+              stroke={stroke}
+              strokeWidth={w}
+              fill="none"
+              strokeLinecap="round"
+              strokeDasharray={c}
+              strokeDashoffset={c - (c * pct) / 100}
+              className="transition-[stroke-dashoffset] duration-500"
+              style={
+                style === "glow"
+                  ? {
+                      filter:
+                        "drop-shadow(0 0 7px color-mix(in oklab, var(--violet) 75%, transparent))",
+                    }
+                  : undefined
+              }
+            />
+          </>
+        )}
       </svg>
       <div className="absolute text-center">
-        <div className="font-display text-sm font-bold">{Math.round(percent)}%</div>
-        <div className="text-[0.5rem] tracking-widest text-muted-foreground">TAMAM</div>
+        <div className="font-display text-sm font-bold">{Math.round(pct)}%</div>
+        <div className="text-[0.5rem] tracking-widest text-muted-foreground">{label}</div>
       </div>
     </div>
   );

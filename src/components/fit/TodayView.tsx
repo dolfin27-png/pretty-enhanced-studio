@@ -20,6 +20,7 @@ type Props = {
   onOpenLibrary: () => void;
   onOpenPlates: () => void;
   onGoProgram: () => void;
+  onOpenOneRm: () => void;
 };
 
 const tipFor = (name: string) => MOVE_LIBRARY.find((m) => m.name === name)?.tips;
@@ -31,6 +32,7 @@ export default function TodayView({
   onOpenLibrary,
   onOpenPlates,
   onGoProgram,
+  onOpenOneRm,
 }: Props) {
   const key = todayKey();
   const day = state.program.find((d) => d.id === state.selectedDayId) ?? DEFAULT_PROGRAM[0]!;
@@ -118,7 +120,11 @@ export default function TodayView({
               {day.focus} • {day.exercises.length} hareket • {targetSets} set
             </p>
           </div>
-          <Ring percent={percent} />
+          <Ring
+            percent={percent}
+            style={state.settings.ringStyle}
+            thickness={state.settings.ringThickness}
+          />
         </div>
 
         <div className="mt-4 grid grid-cols-3 gap-2">
@@ -236,7 +242,14 @@ export default function TodayView({
           <Btn variant="soft" onClick={onOpenPlates}>
             ⚖️ Plaka Hesap
           </Btn>
-          <Btn variant="soft" onClick={() => toast(`Seviye ${derived.level} • ${derived.xp} XP`)}>
+          <Btn variant="soft" onClick={onOpenOneRm}>
+            🧮 1RM Hesap
+          </Btn>
+          <Btn
+            variant="soft"
+            className="col-span-2"
+            onClick={() => toast(`Seviye ${derived.level} • ${derived.xp} XP`)}
+          >
             🏅 Level {derived.level}
           </Btn>
         </div>

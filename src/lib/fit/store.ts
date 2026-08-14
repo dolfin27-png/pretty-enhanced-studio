@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BADGES, DEFAULT_PROGRAM, type ProgramDay } from "./data";
+import { DEFAULT_SETTINGS, applySettings, type Settings } from "./theme";
 
 const KEY = "fit_elite_v3";
 
@@ -29,6 +30,7 @@ export type FitState = {
   waterGoal: number;
   name: string;
   selectedDayId: number;
+  settings: Settings;
 };
 
 const initial: FitState = {
@@ -41,6 +43,7 @@ const initial: FitState = {
   waterGoal: 3000,
   name: "Şampiyon",
   selectedDayId: 1,
+  settings: DEFAULT_SETTINGS,
 };
 
 export const pad = (n: number) => String(n).padStart(2, "0");
@@ -61,7 +64,12 @@ function load(): FitState {
   try {
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return initial;
-    return { ...initial, ...(JSON.parse(raw) as FitState) };
+    const parsed = JSON.parse(raw) as Partial<FitState>;
+    return {
+      ...initial,
+      ...parsed,
+      settings: { ...DEFAULT_SETTINGS, ...(parsed.settings ?? {}) },
+    };
   } catch {
     return initial;
   }
@@ -86,6 +94,11 @@ export function useFit() {
   }, [state, hydrated]);
 
   const update = useCallback((fn: (s: FitState) => FitState) => setState((s) => fn(s)), []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    applySettings(state.settings);
+  }, [state.settings, hydrated]);
 
   return { state, update, hydrated, setState };
 }

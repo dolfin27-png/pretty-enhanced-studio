@@ -5,7 +5,8 @@ import ProfileView from "./ProfileView";
 import ProgramView from "./ProgramView";
 import StatsView from "./StatsView";
 import TodayView from "./TodayView";
-import { LibrarySheet, PlateSheet } from "./Sheets";
+import { LibrarySheet, OneRmSheet, PlateSheet } from "./Sheets";
+import SettingsSheet from "./SettingsSheet";
 
 const TABS = [
   { id: "today", label: "Bugün", icon: "🏠" },
@@ -22,6 +23,8 @@ export default function FitApp() {
   const [libraryDay, setLibraryDay] = useState<number | null>(null);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [platesOpen, setPlatesOpen] = useState(false);
+  const [oneRmOpen, setOneRmOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
     <div className="mx-auto min-h-screen w-full max-w-[560px] pb-24">
@@ -40,11 +43,21 @@ export default function FitApp() {
               </p>
             </div>
           </div>
-          <div className="text-right">
-            <div className="text-[0.55rem] tracking-widest text-muted-foreground">LEVEL</div>
-            <div className="font-display text-lg leading-none font-bold text-violet">
-              {derived.level}
+          <div className="flex items-center gap-2">
+            <div className="text-right">
+              <div className="text-[0.55rem] tracking-widest text-muted-foreground">LEVEL</div>
+              <div className="font-display text-lg leading-none font-bold text-violet">
+                {derived.level}
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={() => setSettingsOpen(true)}
+              aria-label="Kişiselleştirme"
+              className="grid size-10 place-items-center rounded-2xl border border-border bg-secondary/60 text-base transition active:scale-95"
+            >
+              ⚙️
+            </button>
           </div>
         </div>
         <div className="mt-3 grid grid-cols-4 gap-2">
@@ -79,6 +92,7 @@ export default function FitApp() {
             }}
             onOpenPlates={() => setPlatesOpen(true)}
             onGoProgram={() => setTab("program")}
+            onOpenOneRm={() => setOneRmOpen(true)}
           />
         ) : tab === "program" ? (
           <ProgramView
@@ -95,7 +109,12 @@ export default function FitApp() {
         ) : tab === "calendar" ? (
           <CalendarView state={state} />
         ) : (
-          <ProfileView state={state} update={update} derived={derived} />
+          <ProfileView
+            state={state}
+            update={update}
+            derived={derived}
+            onOpenSettings={() => setSettingsOpen(true)}
+          />
         )}
       </main>
 
@@ -133,6 +152,10 @@ export default function FitApp() {
         <LibrarySheet targetDay={libraryDay} update={update} onClose={() => setLibraryOpen(false)} />
       )}
       {platesOpen && <PlateSheet onClose={() => setPlatesOpen(false)} />}
+      {oneRmOpen && <OneRmSheet onClose={() => setOneRmOpen(false)} />}
+      {settingsOpen && (
+        <SettingsSheet state={state} update={update} onClose={() => setSettingsOpen(false)} />
+      )}
     </div>
   );
 }
