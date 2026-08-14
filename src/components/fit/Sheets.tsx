@@ -4,7 +4,7 @@ import { MOVE_LIBRARY, MUSCLES, PLATES } from "@/lib/fit/data";
 import type { FitState } from "@/lib/fit/store";
 import { Btn, NumField, Pill } from "./ui";
 
-function Overlay({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+export function Overlay({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/80 backdrop-blur-sm">
       <div className="card-elite animate-rise flex max-h-[88vh] w-full max-w-[560px] flex-col rounded-b-none p-4">
@@ -55,7 +55,18 @@ export function LibrarySheet({
       ...s,
       program: s.program.map((d) =>
         d.id === targetDay && !d.exercises.some((e) => e.name === name)
-          ? { ...d, exercises: [...d.exercises, { name, sets: 3, reps: "8-12", rest: 90 }] }
+          ? {
+              ...d,
+              exercises: [
+                ...d.exercises,
+                {
+                  name,
+                  sets: s.settings.defaultSets,
+                  reps: s.settings.defaultReps,
+                  rest: s.settings.defaultRest,
+                },
+              ],
+            }
           : d,
       ),
     }));
@@ -151,6 +162,49 @@ export function PlateSheet({ onClose }: { onClose: () => void }) {
           <Btn key={t} variant="soft" onClick={() => setTarget(t)}>
             {t}
           </Btn>
+        ))}
+      </div>
+    </Overlay>
+  );
+}
+
+/** Epley formülü ile 1RM + yüzde tablosu. */
+export function OneRmSheet({ onClose }: { onClose: () => void }) {
+  const [weight, setWeight] = useState(80);
+  const [reps, setReps] = useState(5);
+  const oneRm = Math.round(weight * (1 + Math.max(1, reps) / 30));
+
+  return (
+    <Overlay title="🧮 1RM Hesaplayıcı" onClose={onClose}>
+      <div className="grid grid-cols-2 gap-2">
+        <NumField label="Kaldırılan ağırlık" suffix="kg" value={weight} step={2.5} onChange={setWeight} />
+        <NumField label="Tekrar" value={reps} onChange={setReps} />
+      </div>
+      <div className="card-hero mt-3 p-4 text-center">
+        <div className="kicker">Tahmini 1RM</div>
+        <div className="font-display text-3xl font-bold text-gradient">{oneRm} kg</div>
+      </div>
+      <div className="mt-3 space-y-2 pb-4">
+        {[
+          [95, "2-3 tekrar • güç"],
+          [90, "3-4 tekrar • güç"],
+          [85, "5-6 tekrar • güç-hipertrofi"],
+          [80, "7-8 tekrar • hipertrofi"],
+          [75, "9-10 tekrar • hipertrofi"],
+          [70, "11-12 tekrar • hacim"],
+          [60, "15+ tekrar • dayanıklılık"],
+        ].map(([p, note]) => (
+          <div
+            key={String(p)}
+            className="flex items-center justify-between rounded-xl border border-border bg-background/40 px-3 py-2 text-xs"
+          >
+            <span className="text-muted-foreground">
+              %{p} • {note}
+            </span>
+            <span className="font-display font-bold">
+              {Math.round((oneRm * Number(p)) / 100 / 2.5) * 2.5} kg
+            </span>
+          </div>
         ))}
       </div>
     </Overlay>
