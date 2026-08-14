@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ACCENT_VAR, MOVE_LIBRARY } from "@/lib/fit/data";
+import { ACCENT_VAR, DEFAULT_PROGRAM, MOVE_LIBRARY } from "@/lib/fit/data";
 import {
   fmtHMS,
   fmtMS,
@@ -33,7 +33,7 @@ export default function TodayView({
   onGoProgram,
 }: Props) {
   const key = todayKey();
-  const day = state.program.find((d) => d.id === state.selectedDayId) ?? state.program[0];
+  const day = state.program.find((d) => d.id === state.selectedDayId) ?? DEFAULT_PROGRAM[0]!;
   const session = state.sessions[key];
   const accent = ACCENT_VAR[day.accent];
 
@@ -292,7 +292,7 @@ function ExerciseCard({
 }) {
   const last = logs[logs.length - 1];
   const [weight, setWeight] = useState<number>(last?.weight ?? pr ?? 0);
-  const [rp, setRp] = useState<number>(last?.reps ?? parseInt(reps, 10) || 10);
+  const [rp, setRp] = useState<number>(last?.reps ?? (parseInt(reps, 10) || 10));
   const [open, setOpen] = useState(false);
   const done = logs.length >= sets;
 

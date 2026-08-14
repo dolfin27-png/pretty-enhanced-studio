@@ -119,7 +119,7 @@ export default function StatsView({
             .slice(0, 8)
             .map((k) => {
               const s = state.sessions[k];
-              const day = state.program.find((d) => d.id === s.dayId);
+              const day = state.program.find((d) => d.id === s?.dayId);
               return (
                 <div
                   key={k}

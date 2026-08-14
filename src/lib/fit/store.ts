@@ -112,6 +112,7 @@ export function useDerived(state: FitState) {
     const prs: Record<string, number> = {};
     keys.forEach((k) => {
       const s = state.sessions[k];
+      if (!s) return;
       Object.entries(s.entries).forEach(([ex, logs]) => {
         logs.forEach((l) => {
           if (l.weight > (prs[ex] ?? 0)) prs[ex] = l.weight;
@@ -144,7 +145,7 @@ export function useDerived(state: FitState) {
       const k = dateKey(dt);
       week.push({
         key: k,
-        label: ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"][dt.getDay()],
+        label: ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"][dt.getDay()] ?? "",
         volume: sessionVolume(state.sessions[k]),
       });
     }
