@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import type { RingStyle } from "@/lib/fit/theme";
 
 export function Panel({
   className,
