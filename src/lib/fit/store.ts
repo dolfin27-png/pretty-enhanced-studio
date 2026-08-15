@@ -10,6 +10,12 @@ export type Session = {
   entries: Record<string, SetLog[]>;
   seconds: number;
   finished?: boolean;
+  /** timer is running; elapsed = seconds + (now - startedAt) */
+  running?: boolean | undefined;
+  /** epoch ms when the timer was last started */
+  startedAt?: number | undefined;
+  /** epoch ms until which the rest countdown runs */
+  restUntil?: number | undefined;
 };
 export type Measure = {
   date: string;
@@ -113,6 +119,20 @@ export function sessionVolume(s?: Session) {
 export function sessionSets(s?: Session) {
   if (!s) return 0;
   return Object.values(s.entries).reduce((t, x) => t + x.length, 0);
+}
+
+/** Elapsed workout seconds, surviving reloads via startedAt timestamp. */
+export function sessionElapsed(s?: Session, now = Date.now()) {
+  if (!s) return 0;
+  const base = s.seconds || 0;
+  if (s.running && s.startedAt) return base + Math.max(0, Math.floor((now - s.startedAt) / 1000));
+  return base;
+}
+
+/** Remaining rest seconds from a persisted deadline. */
+export function restRemaining(s?: Session, now = Date.now()) {
+  if (!s?.restUntil) return 0;
+  return Math.max(0, Math.ceil((s.restUntil - now) / 1000));
 }
 
 export function useDerived(state: FitState) {

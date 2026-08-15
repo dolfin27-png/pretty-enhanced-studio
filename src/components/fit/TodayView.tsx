@@ -4,12 +4,14 @@ import { ACCENT_VAR, DEFAULT_PROGRAM, MOVE_LIBRARY } from "@/lib/fit/data";
 import {
   fmtHMS,
   fmtMS,
+  restRemaining,
+  sessionElapsed,
   sessionSets,
   sessionVolume,
   todayKey,
   useDerived,
-  useTimer,
   type FitState,
+  type Session,
 } from "@/lib/fit/store";
 import { Bar, Btn, Metric, Panel, Pill, Ring, SectionHead } from "./ui";
 
@@ -39,20 +41,35 @@ export default function TodayView({
   const session = state.sessions[key];
   const accent = ACCENT_VAR[day.accent];
 
-  const [running, setRunning] = useState(false);
-  const { seconds, setSeconds } = useTimer(running);
-  const [rest, setRest] = useState(0);
+  const running = !!session?.running;
+  const [now, setNow] = useState(() => Date.now());
 
+  // single ticking clock -> elapsed & rest are derived from persisted timestamps
   useEffect(() => {
-    if (session?.seconds && seconds === 0) setSeconds(session.seconds);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (rest <= 0) return;
-    const t = setInterval(() => setRest((r) => Math.max(0, r - 1)), 1000);
+    if (!running && !session?.restUntil) return;
+    setNow(Date.now());
+    const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
-  }, [rest]);
+  }, [running, session?.restUntil]);
+
+  const seconds = sessionElapsed(session, now);
+  const rest = restRemaining(session, now);
+
+  const patchSession = (fn: (prev: Session) => Session) =>
+    update((s) => {
+      const prev: Session = s.sessions[key] ?? { dayId: day.id, entries: {}, seconds: 0 };
+      return { ...s, sessions: { ...s.sessions, [key]: { ...fn(prev), dayId: prev.dayId ?? day.id } } };
+    });
+
+  const toggleRunning = () =>
+    patchSession((prev) =>
+      prev.running
+        ? { ...prev, seconds: sessionElapsed(prev), running: false, startedAt: undefined }
+        : { ...prev, running: true, startedAt: Date.now(), finished: false },
+    );
+
+  const setRestSeconds = (sec: number) =>
+    patchSession((prev) => ({ ...prev, restUntil: sec > 0 ? Date.now() + sec * 1000 : undefined }));
 
   const targetSets = useMemo(() => day.exercises.reduce((t, e) => t + e.sets, 0), [day]);
   const doneSets = sessionSets(session);
@@ -63,13 +80,16 @@ export default function TodayView({
       toast.error("Tekrar sayısı gir");
       return;
     }
-    update((s) => {
-      const prev = s.sessions[key] ?? { dayId: day.id, entries: {}, seconds: 0 };
-      const entries = { ...prev.entries, [exName]: [...(prev.entries[exName] ?? []), { weight, reps }] };
-      return { ...s, sessions: { ...s.sessions, [key]: { ...prev, dayId: day.id, entries } } };
+    patchSession((prev) => {
+      const entries = {
+        ...prev.entries,
+        [exName]: [...(prev.entries[exName] ?? []), { weight, reps }],
+      };
+      const started = prev.running
+        ? prev
+        : { ...prev, running: true, startedAt: Date.now(), finished: false };
+      return { ...started, entries, restUntil: rst > 0 ? Date.now() + rst * 1000 : undefined };
     });
-    setRest(rst);
-    if (!running) setRunning(true);
     const pr = derived.prs[exName] ?? 0;
     toast.success(weight > pr && weight > 0 ? `🏆 Yeni PR: ${weight} kg!` : "Set kaydedildi");
   };
@@ -87,12 +107,15 @@ export default function TodayView({
     });
 
   const finishDay = () => {
-    update((s) => {
-      const prev = s.sessions[key];
-      if (!prev) return s;
-      return { ...s, sessions: { ...s.sessions, [key]: { ...prev, seconds, finished: true } } };
-    });
-    setRunning(false);
+    if (!session) return;
+    patchSession((prev) => ({
+      ...prev,
+      seconds: sessionElapsed(prev),
+      running: false,
+      startedAt: undefined,
+      restUntil: undefined,
+      finished: true,
+    }));
     toast.success("Gün tamamlandı, harika iş! 💪");
   };
 
@@ -102,8 +125,6 @@ export default function TodayView({
       delete next[key];
       return { ...s, sessions: next };
     });
-    setRunning(false);
-    setSeconds(0);
     toast("Bugünün kaydı sıfırlandı");
   };
 
@@ -141,7 +162,7 @@ export default function TodayView({
         </div>
 
         <div className="mt-3 flex gap-2">
-          <Btn variant="primary" className="flex-1" onClick={() => setRunning((r) => !r)}>
+          <Btn variant="primary" className="flex-1" onClick={toggleRunning}>
             {running ? "⏸ Duraklat" : "▶ Antrenmanı Başlat"}
           </Btn>
           <Btn onClick={finishDay}>✓ Bitir</Btn>
@@ -158,8 +179,8 @@ export default function TodayView({
             <div className="font-display text-2xl font-bold text-cyan">{fmtMS(rest)}</div>
           </div>
           <div className="flex gap-2">
-            <Btn onClick={() => setRest((r) => r + 30)}>+30sn</Btn>
-            <Btn variant="danger" onClick={() => setRest(0)}>
+            <Btn onClick={() => setRestSeconds(rest + 30)}>+30sn</Btn>
+            <Btn variant="danger" onClick={() => setRestSeconds(0)}>
               Atla
             </Btn>
           </div>
