@@ -11,11 +11,11 @@ export type Session = {
   seconds: number;
   finished?: boolean;
   /** timer is running; elapsed = seconds + (now - startedAt) */
-  running?: boolean;
+  running?: boolean | undefined;
   /** epoch ms when the timer was last started */
-  startedAt?: number;
+  startedAt?: number | undefined;
   /** epoch ms until which the rest countdown runs */
-  restUntil?: number;
+  restUntil?: number | undefined;
 };
 export type Measure = {
   date: string;
