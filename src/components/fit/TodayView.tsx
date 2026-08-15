@@ -11,6 +11,7 @@ import {
   todayKey,
   useDerived,
   type FitState,
+  type Session,
 } from "@/lib/fit/store";
 import { Bar, Btn, Metric, Panel, Pill, Ring, SectionHead } from "./ui";
 
