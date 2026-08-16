@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDerived, useFit } from "@/lib/fit/store";
 import CalendarView from "./CalendarView";
 import ProfileView from "./ProfileView";
@@ -7,6 +7,8 @@ import StatsView from "./StatsView";
 import TodayView from "./TodayView";
 import { LibrarySheet, OneRmSheet, PlateSheet } from "./Sheets";
 import SettingsSheet from "./SettingsSheet";
+import ReleaseSheet from "./ReleaseSheet";
+import { APP_VERSION, getSeenVersion } from "@/lib/fit/version";
 
 const TABS = [
   { id: "today", label: "Bugün", icon: "🏠" },
@@ -25,6 +27,12 @@ export default function FitApp() {
   const [platesOpen, setPlatesOpen] = useState(false);
   const [oneRmOpen, setOneRmOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [releasesOpen, setReleasesOpen] = useState(false);
+  const [newVersion, setNewVersion] = useState(false);
+
+  useEffect(() => {
+    setNewVersion(getSeenVersion() !== APP_VERSION);
+  }, []);
 
   return (
     <div className="mx-auto min-h-screen w-full max-w-[560px] pb-24">
@@ -39,7 +47,7 @@ export default function FitApp() {
                 Fit Program <span className="text-gradient">ELITE</span>
               </h1>
               <p className="mt-1 text-[0.65rem] text-muted-foreground">
-                6 günlük profesyonel sistem
+                6 günlük profesyonel sistem · v{APP_VERSION}
               </p>
             </div>
           </div>
@@ -50,6 +58,17 @@ export default function FitApp() {
                 {derived.level}
               </div>
             </div>
+            <button
+              type="button"
+              onClick={() => setReleasesOpen(true)}
+              aria-label="Sürüm notları"
+              className="relative grid size-10 place-items-center rounded-2xl border border-border bg-secondary/60 text-base transition active:scale-95"
+            >
+              🧾
+              {newVersion && (
+                <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-lime" />
+              )}
+            </button>
             <button
               type="button"
               onClick={() => setSettingsOpen(true)}
@@ -114,6 +133,7 @@ export default function FitApp() {
             update={update}
             derived={derived}
             onOpenSettings={() => setSettingsOpen(true)}
+            onOpenReleases={() => setReleasesOpen(true)}
           />
         )}
       </main>
@@ -155,6 +175,14 @@ export default function FitApp() {
       {oneRmOpen && <OneRmSheet onClose={() => setOneRmOpen(false)} />}
       {settingsOpen && (
         <SettingsSheet state={state} update={update} onClose={() => setSettingsOpen(false)} />
+      )}
+      {releasesOpen && (
+        <ReleaseSheet
+          onClose={() => {
+            setReleasesOpen(false);
+            setNewVersion(false);
+          }}
+        />
       )}
     </div>
   );
