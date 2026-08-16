@@ -10,6 +10,20 @@ export type Release = {
 
 /** En yeni sürüm en üstte. Yeni sürüm eklemek için buraya bir kayıt ekle. */
 export const CHANGELOG: Release[] = [
+  // bun run release komutu yeni kaydı bu işaretin altına ekler
+  // <!-- release:next -->
+  {
+    version: "1.4.0",
+    date: "2026-08-16",
+    type: "minor",
+    title: "Otomatik sürümleme ve sürümlü yedek",
+    notes: [
+      "`bun run release` ile sürüm numarası otomatik artıyor ve CHANGELOG'a kayıt ekleniyor",
+      "Yedek JSON dosyasına sürüm bilgisi ve tüm değişiklik notları yazılıyor",
+      "Yedek geri yüklenirken dosyanın hangi sürümden geldiği bildiriliyor",
+      "CHANGELOG.md dosyası sürümle birlikte otomatik güncelleniyor",
+    ],
+  },
   {
     version: "1.3.0",
     date: "2026-08-16",
@@ -91,4 +105,23 @@ export function changelogMarkdown() {
       "",
     ]),
   ].join("\n");
+}
+
+/** Yedek dosyasına gömülen sürüm bilgisi. */
+export type BackupMeta = {
+  app: string;
+  version: string;
+  releaseDate: string;
+  exportedAt: string;
+  changelog: Release[];
+};
+
+export function backupMeta(): BackupMeta {
+  return {
+    app: "Pro Fitness",
+    version: APP_VERSION,
+    releaseDate: APP_RELEASE_DATE,
+    exportedAt: new Date().toISOString(),
+    changelog: CHANGELOG,
+  };
 }
