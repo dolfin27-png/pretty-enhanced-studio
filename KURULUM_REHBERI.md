@@ -380,3 +380,39 @@ Bu proje Lovable platformunda geliştirilmiştir. Daha fazla bilgi için:
 
 **Hazırlayan:** Lovable AI
 **Son güncelleme:** 15 Ağustos 2026
+
+## Otomatik Sürümleme
+
+Yeni sürüm çıkarmak için:
+
+```bash
+bun run release -- minor "Başlık" "değişiklik notu 1" "değişiklik notu 2"
+# tür: major | minor | patch (varsayılan patch)
+```
+
+Komut şunları otomatik yapar:
+
+1. `src/lib/fit/version.ts` içindeki `CHANGELOG` listesinin en üstüne yeni kaydı ekler (sürüm numarasını türe göre artırır).
+2. `package.json` içindeki `version` alanını günceller.
+3. `CHANGELOG.md` dosyasını yeniden üretir.
+
+Uygulamadaki 🧾 sürüm paneli ve Profil > Sürüm alanı bu listeden beslenir.
+
+## Yedek Dosyasındaki Sürüm Bilgisi
+
+Profil > "Verileri indir" ile alınan JSON yedeğinin başında `__meta` bloğu bulunur:
+
+```json
+{
+  "__meta": {
+    "app": "Pro Fitness",
+    "version": "1.4.0",
+    "releaseDate": "2026-08-16",
+    "exportedAt": "2026-08-16T16:40:00.000Z",
+    "changelog": [ ... ]
+  },
+  ...
+}
+```
+
+Yedek geri yüklenirken bu sürüm bilgisi okunur ve bildirimde gösterilir; `__meta` uygulama verisine yazılmaz.
