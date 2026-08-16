@@ -1,21 +1,33 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { todayKey, type FitState, type useDerived } from "@/lib/fit/store";
 import { Bar, Btn, NumField, Panel, Pill, SectionHead } from "./ui";
+import {
+  APP_RELEASE_DATE,
+  APP_VERSION,
+  LATEST_RELEASE,
+  getSeenVersion,
+} from "@/lib/fit/version";
 
 export default function ProfileView({
   state,
   update,
   derived,
   onOpenSettings,
+  onOpenReleases,
 }: {
   state: FitState;
   update: (fn: (s: FitState) => FitState) => void;
   derived: ReturnType<typeof useDerived>;
   onOpenSettings: () => void;
+  onOpenReleases: () => void;
 }) {
   const key = todayKey();
   const [m, setM] = useState({ weight: 0, chest: 0, waist: 0, arm: 0, leg: 0 });
+  const [isNew, setIsNew] = useState(false);
+  useEffect(() => {
+    setIsNew(getSeenVersion() !== APP_VERSION);
+  }, []);
   const water = state.water[key] ?? 0;
   const kcal = state.kcal[key] ?? 0;
   const last = state.measures[0];
@@ -33,7 +45,7 @@ export default function ProfileView({
     const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `fit-program-${key}.json`;
+    a.download = `fit-program-v${APP_VERSION}-${key}.json`;
     a.click();
     toast.success("Veriler indirildi");
   };
