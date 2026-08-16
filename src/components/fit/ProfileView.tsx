@@ -1,21 +1,33 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { todayKey, type FitState, type useDerived } from "@/lib/fit/store";
 import { Bar, Btn, NumField, Panel, Pill, SectionHead } from "./ui";
+import {
+  APP_RELEASE_DATE,
+  APP_VERSION,
+  LATEST_RELEASE,
+  getSeenVersion,
+} from "@/lib/fit/version";
 
 export default function ProfileView({
   state,
   update,
   derived,
   onOpenSettings,
+  onOpenReleases,
 }: {
   state: FitState;
   update: (fn: (s: FitState) => FitState) => void;
   derived: ReturnType<typeof useDerived>;
   onOpenSettings: () => void;
+  onOpenReleases: () => void;
 }) {
   const key = todayKey();
   const [m, setM] = useState({ weight: 0, chest: 0, waist: 0, arm: 0, leg: 0 });
+  const [isNew, setIsNew] = useState(false);
+  useEffect(() => {
+    setIsNew(getSeenVersion() !== APP_VERSION);
+  }, []);
   const water = state.water[key] ?? 0;
   const kcal = state.kcal[key] ?? 0;
   const last = state.measures[0];
@@ -33,7 +45,7 @@ export default function ProfileView({
     const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `fit-program-${key}.json`;
+    a.download = `fit-program-v${APP_VERSION}-${key}.json`;
     a.click();
     toast.success("Veriler indirildi");
   };
@@ -203,6 +215,26 @@ export default function ProfileView({
             Tüm veriyi sil
           </Btn>
         </div>
+      </Panel>
+
+      <Panel>
+        <SectionHead
+          kicker="Sürüm"
+          title={`Pro Fitness v${APP_VERSION}`}
+          right={isNew ? <Pill tone="lime">Yeni</Pill> : <Pill>{APP_RELEASE_DATE}</Pill>}
+        />
+        <p className="text-xs font-semibold text-foreground">{LATEST_RELEASE.title}</p>
+        <ul className="mt-2 space-y-1">
+          {LATEST_RELEASE.notes.slice(0, 3).map((n) => (
+            <li key={n} className="flex gap-2 text-xs text-muted-foreground">
+              <span className="text-violet">›</span>
+              <span>{n}</span>
+            </li>
+          ))}
+        </ul>
+        <Btn variant="soft" className="mt-3 w-full" onClick={onOpenReleases}>
+          🧾 Değişiklik notları
+        </Btn>
       </Panel>
     </div>
   );
