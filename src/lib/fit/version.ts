@@ -10,7 +10,8 @@ export type Release = {
 
 /** En yeni sürüm en üstte. Yeni sürüm eklemek için buraya bir kayıt ekle. */
 export const CHANGELOG: Release[] = [
-  // <!-- release:next --> (bun run release komutu buraya yeni kayıt ekler)
+  // bun run release komutu yeni kaydı bu işaretin altına ekler
+  // <!-- release:next -->
   {
     version: "1.4.0",
     date: "2026-08-16",
