@@ -6,6 +6,7 @@ import {
   APP_RELEASE_DATE,
   APP_VERSION,
   LATEST_RELEASE,
+  backupMeta,
   getSeenVersion,
 } from "@/lib/fit/version";
 
@@ -42,22 +43,29 @@ export default function ProfileView({
   };
 
   const exportData = () => {
-    const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+    const payload = { __meta: backupMeta(), ...state };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = `fit-program-v${APP_VERSION}-${key}.json`;
     a.click();
-    toast.success("Veriler indirildi");
+    toast.success(`Yedek indirildi (v${APP_VERSION})`);
   };
 
   const importData = (file: File) => {
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const parsed = JSON.parse(String(reader.result)) as Partial<FitState>;
+        const raw = JSON.parse(String(reader.result)) as Partial<FitState> & {
+          __meta?: { version?: string };
+        };
+        const meta = raw.__meta;
+        const { __meta: _ignored, ...parsed } = raw;
         if (!parsed.program || !parsed.sessions) throw new Error("bad");
         update((s) => ({ ...s, ...parsed, settings: { ...s.settings, ...(parsed.settings ?? {}) } }));
-        toast.success("Yedek geri yüklendi");
+        toast.success(
+          meta?.version ? `Yedek geri yüklendi (v${meta.version})` : "Yedek geri yüklendi",
+        );
       } catch {
         toast.error("Dosya okunamadı");
       }
