@@ -216,6 +216,26 @@ export default function ProfileView({
           </Btn>
         </div>
       </Panel>
+
+      <Panel>
+        <SectionHead
+          kicker="Sürüm"
+          title={`Pro Fitness v${APP_VERSION}`}
+          right={isNew ? <Pill tone="lime">Yeni</Pill> : <Pill>{APP_RELEASE_DATE}</Pill>}
+        />
+        <p className="text-xs font-semibold text-foreground">{LATEST_RELEASE.title}</p>
+        <ul className="mt-2 space-y-1">
+          {LATEST_RELEASE.notes.slice(0, 3).map((n) => (
+            <li key={n} className="flex gap-2 text-xs text-muted-foreground">
+              <span className="text-violet">›</span>
+              <span>{n}</span>
+            </li>
+          ))}
+        </ul>
+        <Btn variant="soft" className="mt-3 w-full" onClick={onOpenReleases}>
+          🧾 Değişiklik notları
+        </Btn>
+      </Panel>
     </div>
   );
 }
